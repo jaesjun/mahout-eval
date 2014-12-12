@@ -17,7 +17,7 @@ public class UserTable extends SingleSelectionTableBase {
 		//getColumnModel().getColumn(2).setMaxWidth(56);
 		
 		TableRowSorter trs = new TableRowSorter(getModel());
-		NumberComparator numberComparator = new NumberComparator();
+		NumberComparator<Long> numberComparator = new NumberComparator<Long>();
 		trs.setComparator(0, numberComparator);
 		trs.setComparator(1, numberComparator);
 		setRowSorter(trs);

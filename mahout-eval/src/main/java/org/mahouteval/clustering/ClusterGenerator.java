@@ -32,8 +32,8 @@ public class ClusterGenerator {
 	public static List<List<Cluster>> runKMeansClusterer(List<Vector> vectors, DistanceMeasure measure, 
 		int numClusters, int maxIterations, double convergenceDelta) throws IOException, InterruptedException, ClassNotFoundException {
 		Configuration conf = new Configuration();
-	    Path samples = new Path("samples");
-	    Path output = new Path("output");
+	    Path samples = new Path("vecCluster/samples");
+	    Path output = new Path("vecCluster/output");
 	    HadoopUtil.delete(conf, samples);
 	    HadoopUtil.delete(conf, output);
 
@@ -47,8 +47,8 @@ public class ClusterGenerator {
 	public static List<List<Cluster>> runFuzzyKMeansClusterer(List<Vector> vectors, DistanceMeasure measure, 
 		int numClusters, int maxIterations, float m, double threshold) throws IOException, ClassNotFoundException, InterruptedException {
 		Configuration conf = new Configuration();
-		Path samples = new Path("samples");
-	    Path output = new Path("output");
+	    Path samples = new Path("vecCluster/samples");
+	    Path output = new Path("vecCluster/output");
 	    HadoopUtil.delete(conf, samples);
 	    HadoopUtil.delete(conf, output);
 
@@ -63,8 +63,8 @@ public class ClusterGenerator {
 	public static List<List<Cluster>> runCanopyClusterer(List<Vector> vectors, DistanceMeasure measure, 
 		double t1, double t2) throws IOException, InterruptedException, ClassNotFoundException {
 		Configuration conf = new Configuration();
-		Path samples = new Path("samples");
-	    Path output = new Path("output");
+	    Path samples = new Path("vecCluster/samples");
+	    Path output = new Path("vecCluster/output");
 	    HadoopUtil.delete(conf, samples);
 	    HadoopUtil.delete(conf, output);
 

@@ -39,6 +39,7 @@ import org.apache.mahout.common.distance.WeightedEuclideanDistanceMeasure;
 import org.apache.mahout.common.distance.WeightedManhattanDistanceMeasure;
 import org.apache.mahout.math.Vector;
 import org.mahouteval.clustering.ClusterGenerator;
+import org.mahouteval.clustering.NewsKMeansClustering;
 import org.mahouteval.clustering.VectorGenerator;
 import org.mahouteval.gui.chart.ClusteringPlotChart;
 import org.mahouteval.model.TwoDimensionVector;
@@ -84,8 +85,10 @@ public class ClusteringContainer extends JPanel implements ActionListener {
 	private GridBagConstraints gc = new GridBagConstraints();
 	
 	private List<Vector> vectors = new ArrayList<Vector>();
+	private MahoutDemoUI demoUI;
 
-	public ClusteringContainer() {
+	public ClusteringContainer(MahoutDemoUI demoUI) {
+		this.demoUI = demoUI;
 		initUIs();
 	}
 
@@ -112,10 +115,6 @@ public class ClusteringContainer extends JPanel implements ActionListener {
 		clusterSizeField.setPreferredSize(new Dimension(40, 20));
 		clusterSizeField.setText("5");
 		clusterPanel.add(clusterSizeField);
-
-		clusteringChooseBox.addActionListener(this);
-		clusterPanel.add(new JLabel(" Clustering Method"));
-		clusterPanel.add(clusteringChooseBox);
 
 		clusterPanel.add(new JLabel(" Max Iteration"));
 		maxIterationField.setPreferredSize(new Dimension(40, 20));
@@ -144,6 +143,10 @@ public class ClusteringContainer extends JPanel implements ActionListener {
 		t2Field.setText("1.5");
 		t2Field.setEnabled(false);
 		clusterPanel.add(t2Field);
+
+		clusteringChooseBox.addActionListener(this);
+		clusterPanel.add(new JLabel(" Method"));
+		clusterPanel.add(clusteringChooseBox);
 
 		clusteringBtn.addActionListener(this);
 		clusterPanel.add(clusteringBtn);
@@ -320,15 +323,24 @@ public class ClusteringContainer extends JPanel implements ActionListener {
 	}
 
 	private void doClustering() {
-		try {
-			if (clusteringChooseBox.getSelectedIndex() == 0 || clusteringChooseBox.getSelectedIndex() == 1) {
-				doKMeansClustering();
-			} else {
-				doCanopyClustering();
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					if (clusteringChooseBox.getSelectedIndex() == 0 || clusteringChooseBox.getSelectedIndex() == 1) {
+						doKMeansClustering();
+					} else {
+						doCanopyClustering();
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				} finally {
+					demoUI.hideWaitDialog();
+				}
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		}).start();
+		demoUI.showWaitDialog("Clustering document", "  Please wait until clustering finish...");
 	}
 
 	private void doCanopyClustering() throws Exception {
@@ -343,22 +355,19 @@ public class ClusteringContainer extends JPanel implements ActionListener {
 
 	private void doKMeansClustering() throws Exception {
 		Class<? extends DistanceMeasure> clazz = getDistanceMesureClass();
-		DistanceMeasure measure = clazz.newInstance();
-		int numClusters = Integer.parseInt(clusterSizeField.getText());
-		int maxIterations = Integer.parseInt(maxIterationField.getText());
-		double convergenceDelta = Double.parseDouble(convergenceDeltaField.getText());
-		List<List<Cluster>> clusters = null;
+		final DistanceMeasure measure = clazz.newInstance();
+		final int numClusters = Integer.parseInt(clusterSizeField.getText());
+		final int maxIterations = Integer.parseInt(maxIterationField.getText());
+		final double convergenceDelta = Double.parseDouble(convergenceDeltaField.getText());
 	
 		if (clusteringChooseBox.getSelectedIndex() == 0) {
-			clusters = ClusterGenerator.runKMeansClusterer(vectors, measure, numClusters, maxIterations, convergenceDelta);
+			displayCluster(ClusterGenerator.runKMeansClusterer(vectors, measure, numClusters, maxIterations, convergenceDelta));
 		} else if (clusteringChooseBox.getSelectedIndex() == 1) {
 			float fuziness = Float.parseFloat(fuzinessField.getText());
-			clusters = ClusterGenerator.runFuzzyKMeansClusterer(vectors, measure, numClusters, maxIterations, fuziness, convergenceDelta);
+			displayCluster(ClusterGenerator.runFuzzyKMeansClusterer(vectors, measure, numClusters, maxIterations, fuziness, convergenceDelta));
 		}
-		
-		displayCluster(clusters);
 	}
-	
+
 	private void displayCluster(List<List<Cluster>> clusters) {
 		Map<Integer, List<TwoDimensionVector>> centerMap = new TreeMap<Integer, List<TwoDimensionVector>>();
 		Map<Integer, List<TwoDimensionVector>> radiusMap = new TreeMap<Integer, List<TwoDimensionVector>>();

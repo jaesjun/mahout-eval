@@ -34,7 +34,7 @@ public class ItemTable extends SingleSelectionTableBase {
 		getColumnModel().getColumn(header.size() + 1).setMaxWidth(55);
 		
 		trs = new TableRowSorter(getModel());
-		NumberComparator numberComparator = new NumberComparator();
+		NumberComparator<Long> numberComparator = new NumberComparator<Long>();
 		trs.setComparator(0, numberComparator);
 		setRowSorter(trs);
 	}

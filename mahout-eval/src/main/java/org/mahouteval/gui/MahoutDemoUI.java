@@ -1,65 +1,38 @@
 package org.mahouteval.gui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.ComponentOrientation;
 import java.awt.Container;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.Toolkit;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
-import org.apache.mahout.cf.taste.impl.similarity.CityBlockSimilarity;
-import org.apache.mahout.cf.taste.impl.similarity.EuclideanDistanceSimilarity;
-import org.apache.mahout.cf.taste.impl.similarity.LogLikelihoodSimilarity;
-import org.apache.mahout.cf.taste.impl.similarity.PearsonCorrelationSimilarity;
-import org.apache.mahout.cf.taste.impl.similarity.SpearmanCorrelationSimilarity;
-import org.apache.mahout.cf.taste.impl.similarity.TanimotoCoefficientSimilarity;
-import org.apache.mahout.cf.taste.impl.similarity.UncenteredCosineSimilarity;
-import org.apache.mahout.cf.taste.recommender.RecommendedItem;
-import org.apache.mahout.cf.taste.similarity.ItemSimilarity;
-import org.apache.mahout.cf.taste.similarity.UserSimilarity;
-import org.apache.mahout.math.Vector;
 import org.mahouteval.cf.DataModelBuilder;
 import org.mahouteval.cf.UserItemRecommender;
-import org.mahouteval.clustering.VectorGenerator;
-import org.mahouteval.gui.chart.ClusteringPlotChart;
-import org.mahouteval.gui.chart.PreferenceStarPlotChart;
-import org.mahouteval.gui.table.ItemTable;
-import org.mahouteval.gui.table.PreferenceCompareTable;
-import org.mahouteval.gui.table.UserTable;
+import org.mahouteval.model.Document;
 import org.mahouteval.model.Item;
-import org.mahouteval.model.ItemLoader;
+import org.mahouteval.model.ModelLoader;
+import org.mahouteval.model.ModelLoaderListener;
 import org.mahouteval.model.Preference;
-import org.mahouteval.model.PreferenceLoader;
-import org.mahouteval.model.TwoDimensionVector;
 import org.mahouteval.model.User;
-import org.mahouteval.model.UserLoader;
 
 public class MahoutDemoUI {
 	private CfContainer cfContainer;
 	private ClusteringContainer clusteringContainer;
+	private DocumentClusteringContainer documentClusteringContainer;
 	
 	private JTabbedPane tabPane = new JTabbedPane();
 	
@@ -67,48 +40,52 @@ public class MahoutDemoUI {
 	
 	private DataModelBuilder builder = new DataModelBuilder();
 	private UserItemRecommender userItemRecommender;
-	private UserLoader userLoader;
-	private ItemLoader itemLoader;
-	private PreferenceLoader preferenceLoader;
-	
+	private ModelLoader csvModelLoader;
+
+	private JDialog msgPopupDlg;
+
 	public enum LoadEnum {
 		USER, ITEM, PREFERENCE
 	};
 	
-	public MahoutDemoUI(Container container, UserLoader userLoader, ItemLoader itemLoader, PreferenceLoader preferenceLoader) {
+	public MahoutDemoUI(Container container, ModelLoader csvModelLoader) {
 		this.container = container;
-		this.userLoader = userLoader;
-		this.itemLoader = itemLoader;
-		this.preferenceLoader = preferenceLoader;
+		this.csvModelLoader = csvModelLoader;
 		initUIs();
 	}
 
 	private void initUIs() {
 		cfContainer = new CfContainer(this);
-		clusteringContainer = new ClusteringContainer();
+		clusteringContainer = new ClusteringContainer(this);
+		documentClusteringContainer = new DocumentClusteringContainer(this);
+		
 		tabPane.addTab("Collaborative Filtering", cfContainer);
-		tabPane.addTab("Clustering", clusteringContainer);
+		tabPane.addTab("2D Vector Clustering", clusteringContainer);
+		tabPane.addTab("Document Clustering", documentClusteringContainer);
 		
 		container.add(tabPane, BorderLayout.CENTER);
 	}
 
 	public void loadPreference(InputStream is) throws IOException {
-		PreferenceLoader.Listener listener = new PreferenceLoader.Listener() {
-			public void preferenceLoadStarted(String[] columns) {
+		ModelLoaderListener.Listener<Preference> listener = new ModelLoaderListener.Listener<Preference>() {
+			@Override
+			public void modelLoadStarted(String[] columns) {
 				cfContainer.clearPreferenceChart();
 			}
 
-			public void preferenceLoaded(Preference preference) {
-				cfContainer.addPreference(preference);
-				builder.addPreference(preference);
+			@Override
+			public void modelLoaded(Preference csvBasedObject) {
+				cfContainer.addPreference(csvBasedObject);
+				builder.addPreference(csvBasedObject);
 			}
 
-			public void preferenceLoadEnded() {
+			@Override
+			public void modelLoadEnded() {
 			}
 		};
 		
-		preferenceLoader.addListener(listener);
-		preferenceLoader.loadPreference(is);
+		csvModelLoader.addPreferenceLoadListener(listener);
+		csvModelLoader.loadPreference(is);
 		userItemRecommender = new UserItemRecommender(builder.buildDataModel());
 	}
 
@@ -118,65 +95,99 @@ public class MahoutDemoUI {
 		final List<Long> maxUserId = new ArrayList<Long>();
 		maxUserId.add(-1L);
 		
-		UserLoader.Listener listener = new UserLoader.Listener() {
-			public void userLoaded(User user) {
-				if (maxUserId.get(0) < user.getId()) {
-					maxUserId.remove(0);
-					maxUserId.add(user.getId());
-				}
-				users.add(user);
-			}
-			
-			public void userLoadStarted(String[] columns) {
+		ModelLoaderListener.Listener<User> listener = new ModelLoaderListener.Listener<User>() {
+			@Override
+			public void modelLoadStarted(String[] columns) {
 				for (String column : columns) {
 					header.add(column);
 				}
 			}
 			
-			public void userLoadEnded() {
+			@Override
+			public void modelLoadEnded() {
+			}
+
+			@Override
+			public void modelLoaded(User csvBasedObject) {
+				if (maxUserId.get(0) < csvBasedObject.getId()) {
+					maxUserId.remove(0);
+					maxUserId.add(csvBasedObject.getId());
+				}
+				users.add(csvBasedObject);
 			}
 		};
 		
-		userLoader.addListener(listener);
-		userLoader.loadUser(is);
+		csvModelLoader.addUserLoadListener(listener);
+		csvModelLoader.loadUser(is);
 		
 		cfContainer.setMaxUserId(maxUserId.get(0));
 		cfContainer.displayUser(header, users);
 	}
+	
+	public void loadDocument(URL url) throws URISyntaxException, IOException {
+		final List<Document> documents = new ArrayList<Document>();
+		final List<String> header = new ArrayList<String>();
+		
+		ModelLoaderListener.Listener<Document> listener = new ModelLoaderListener.Listener<Document>() {
+			@Override
+			public void modelLoadStarted(String[] columns) {
+				for (String column : columns) {
+					header.add(column);
+				}
+			}
+			
+			@Override
+			public void modelLoadEnded() {
+			}
 
+			@Override
+			public void modelLoaded(Document csvBasedObject) {
+				documents.add(csvBasedObject);
+			}
+		};
+		
+		csvModelLoader.addDocumentLoadListener(listener);
+		csvModelLoader.loadDocument(url);
+		documentClusteringContainer.dispalyDocument(header, documents);
+	}
+	
 	public void loadItem(InputStream is) throws IOException {
 		final List<Item> items = new ArrayList<Item>();
 		final List<String> header = new ArrayList<String>();
 		final List<Long> maxItemId = new ArrayList<Long>();
 		maxItemId.add(-1L);
 		
-		ItemLoader.Listener listener = new ItemLoader.Listener() {
-			public void itemLoaded(Item item) {
-				if (maxItemId.get(0) < item.getId()) {
-					maxItemId.remove(0);
-					maxItemId.add(item.getId());
-				}
-				
-				items.add(item);
-			}
-			
-			public void itemLoadStarted(String[] columns) {
+		ModelLoaderListener.Listener<Item> listener = new ModelLoaderListener.Listener<Item>() {
+			@Override
+			public void modelLoadStarted(String[] columns) {
 				for (String column : columns) {
 					header.add(column);
 				}
 			}
-			
-			public void itemLoadEnded() {
+
+			@Override
+			public void modelLoaded(Item csvBasedObject) {
+				if (maxItemId.get(0) < csvBasedObject.getId()) {
+					maxItemId.remove(0);
+					maxItemId.add(csvBasedObject.getId());
+				}
+				
+				items.add(csvBasedObject);
 			}
+
+			@Override
+			public void modelLoadEnded() {
+			}
+
 		};
 		
-		itemLoader.addListener(listener);
-		itemLoader.loadItem(is);
+		csvModelLoader.addItemLoadListener(listener);
+		csvModelLoader.loadItem(is);
 		
 		cfContainer.setMaxItemId(maxItemId.get(0));
 		cfContainer.displayItem(header, items);
 	}
-
+	
 	public void setPreferredSize(Dimension preferredSize) {
 		container.setPreferredSize(preferredSize);
 	}
@@ -216,6 +227,35 @@ public class MahoutDemoUI {
 
 	public UserItemRecommender getUserItemRecommender() {
 		return userItemRecommender;
+	}
+	
+	public void showWaitDialog(String title, String msg) {
+		msgPopupDlg = new JDialog();
+		JLabel label = new JLabel(msg);
+		msgPopupDlg.setLocationRelativeTo(null);
+		msgPopupDlg.setTitle(title);
+		msgPopupDlg.add(label);
+		msgPopupDlg.pack();	
+		msgPopupDlg.setSize(300, 100);
+		msgPopupDlg.setModal(true);
+		msgPopupDlg.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+		Toolkit toolkit = Toolkit.getDefaultToolkit();
+		Dimension screenSize = toolkit.getScreenSize();
+		int x = (screenSize.width - msgPopupDlg.getWidth()) / 2;
+		int y = (screenSize.height - msgPopupDlg.getHeight()) / 2;
+		
+		msgPopupDlg.setLocation(x, y);
+		
+		msgPopupDlg.setResizable(false);
+		msgPopupDlg.setVisible(true);
+	}
+	
+	public void hideWaitDialog() {
+		if (msgPopupDlg != null) {
+			msgPopupDlg.setVisible(false);
+			msgPopupDlg = null;
+		}
 	}
 
 }
