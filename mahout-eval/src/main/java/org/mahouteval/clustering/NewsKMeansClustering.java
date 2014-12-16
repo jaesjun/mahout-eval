@@ -164,7 +164,8 @@ public class NewsKMeansClustering {
 	    VectorWritable value = new VectorWritable();
 		Map<String, List<int[]>> frequencyMap = new HashMap<String, List<int[]>>();
 		while (read.next(key, value)) {
-			if (docIds.contains(key.toString())) {
+			String docId = key.toString();
+			if (docIds.contains(docId)) {
 				System.out.println("Loading terms for : " + key.toString());
 		    	RandomAccessSparseVector vect = (RandomAccessSparseVector)value.get();
 		    	List<int[]> termCount = new ArrayList<int[]>();
@@ -174,7 +175,7 @@ public class NewsKMeansClustering {
 		    		termCount.add(idCount);
 		    	}
 		    	
-				frequencyMap.put(key.toString(), termCount);
+				frequencyMap.put(docId, termCount);
 			}
 		}
 		read.close();
@@ -206,9 +207,6 @@ public class NewsKMeansClustering {
 	    			terms.add(term);
 	    		}
 	    	}
-	    	
-	    	System.out.println("docId : " + docId + ", terms : " + terms.size());
-	    	
 	    	vectors.put(docId, terms);
 	    }
 	    reader.close();

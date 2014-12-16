@@ -44,7 +44,6 @@ import org.mahouteval.model.Document;
 import org.mahouteval.model.TFIDFTermVector;
 
 public class DocumentClusteringContainer extends JPanel implements ActionListener {
-	private JTextField minSupportField = new JTextField();
 	private JTextField minDfField = new JTextField();
 	private JTextField maxDfPercentField = new JTextField();
 	private JTextField maxNGramSizeField = new JTextField();
@@ -164,11 +163,6 @@ public class DocumentClusteringContainer extends JPanel implements ActionListene
 		distanceMeasureOptionBox.setSelectedIndex(2);
 		clusterPanel.add(distanceMeasureOptionBox);
 
-		clusterPanel.add(new JLabel(" Min Support"));
-		minSupportField.setText("2");
-		minSupportField.setPreferredSize(new Dimension(40, 20));
-		clusterPanel.add(minSupportField);
-
 		clusterPanel.add(new JLabel(" Min Doc Freq"));
 		minDfField.setText("5");
 		minDfField.setPreferredSize(new Dimension(40, 20));
@@ -236,7 +230,7 @@ public class DocumentClusteringContainer extends JPanel implements ActionListene
 						reflectCluster(NewsKMeansClustering.clusterByKMeans(DocumentClusteringContainer.class.getResource("/reuter/convert"), measure,
 								Integer.parseInt(clusterSizeChooseBox.getSelectedItem().toString()),
 								Integer.parseInt(maxIterationField.getText()),
-								Integer.parseInt(minSupportField.getText()), 
+								2, 
 								Integer.parseInt(minDfField.getText()),
 								Integer.parseInt(maxDfPercentField.getText()), 
 								Integer.parseInt(maxNGramSizeField.getText()),
@@ -263,7 +257,7 @@ public class DocumentClusteringContainer extends JPanel implements ActionListene
 						reflectCluster(NewsKMeansClustering.clusterByFuzzyKMeans(DocumentClusteringContainer.class.getResource("/reuter/convert"), measure,
 								Integer.parseInt(clusterSizeChooseBox.getSelectedItem().toString()),
 								Integer.parseInt(maxIterationField.getText()),
-								Integer.parseInt(minSupportField.getText()), 
+								2, 
 								Integer.parseInt(minDfField.getText()),
 								Integer.parseInt(maxDfPercentField.getText()), 
 								Integer.parseInt(maxNGramSizeField.getText()),
@@ -310,9 +304,8 @@ public class DocumentClusteringContainer extends JPanel implements ActionListene
 	}
 
 	private boolean validatePositiveIntegerField() {
-		if (validatePositiveIntegerField(minSupportField) && validatePositiveIntegerField(minDfField) &&
-				validatePositiveIntegerField(maxDfPercentField) && validatePositiveIntegerField(maxNGramSizeField) &&
-				validatePositiveIntegerField(maxIterationField)) {
+		if (validatePositiveIntegerField(minDfField) && validatePositiveIntegerField(maxDfPercentField) && 
+				validatePositiveIntegerField(maxNGramSizeField) && validatePositiveIntegerField(maxIterationField)) {
 			return true;
 		}
 		return false;
@@ -370,8 +363,10 @@ public class DocumentClusteringContainer extends JPanel implements ActionListene
 			List<TFIDFTermVector> clusterWideVector = new ArrayList<TFIDFTermVector>();
 			Map<String, List<int[]>> termFrequency = NewsKMeansClustering.readTermFrequency(docIds);
 			
+			System.out.println("cluster id [" + clusterId + "] contains [" + docIds.size() + "] documents");
 			for (String docId : docIds) {
 				List<TFIDFTermVector> termVector = docTerms.get(docId);
+				System.out.println("doc id : " + docId + ", term size : " + termVector.size());
 				List<int[]> freqVector = termFrequency.get(docId);
 				
 				mergeTermAndFrequency(clusterWideVector, termVector, freqVector);

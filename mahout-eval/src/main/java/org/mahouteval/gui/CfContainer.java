@@ -413,13 +413,11 @@ public class CfContainer extends JPanel implements ActionListener, ListSelection
 	}
 	
 	private void showInfluentialItemUser() {
-		if (userTable.getSelectedRowCount() > 0) {
-			int row = itemTable.getSelectedRow();
-			if (itemTable.getValueAt(row, 3) != null) {
-				initPreferenceCompareTableForUser(ubrInfluentialUsers);
-			} else if (itemTable.getValueAt(row, 4) != null) {
-				compareItemBecause();
-			}
+		int row = itemTable.getSelectedRow();
+		if (itemTable.getValueAt(row, 3) != null) {
+			initPreferenceCompareTableForUser(ubrInfluentialUsers);
+		} else if (itemTable.getValueAt(row, 4) != null) {
+			compareItemBecause();
 		}
 	}
 	
@@ -515,7 +513,7 @@ public class CfContainer extends JPanel implements ActionListener, ListSelection
 				recommendItemBaseButton.setEnabled(similarClassBox.getSelectedIndex() != 4 && userTable.getSelectedRowCount() > 0);
 			} else if (event.getSource() == itemTable.getSelectionModel()) {
 				similarItemButton.setEnabled(similarClassBox.getSelectedIndex() != 4 && itemTable.getSelectedRowCount() > 0);
-				if (itemTable.getSelectedRowCount() > 0) {
+				if (itemTable.getSelectedRowCount() > 0 && userTable.getSelectedRowCount() > 0) {
 					showInfluentialItemUser();
 				}
 			}

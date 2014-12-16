@@ -5,7 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.RowSorter;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import org.mahouteval.model.Document;
@@ -13,7 +15,8 @@ import org.mahouteval.model.Document;
 public class DocumentTable extends SingleSelectionTableBase {
 	public void displayDocument(List<String> header, List<Document> documents) {
 		super.setAutoCreateRowSorter(false);
-		setModel(new DocumentTableModel(documents, header));
+		DocumentTableModel tableModel = new DocumentTableModel(documents, header);
+		setModel(tableModel);
 		getColumnModel().getColumn(0).setPreferredWidth(100);
 		getColumnModel().getColumn(0).setMaxWidth(600);
 		getColumnModel().getColumn(1).setPreferredWidth(150);
@@ -21,10 +24,10 @@ public class DocumentTable extends SingleSelectionTableBase {
 		getColumnModel().getColumn(2).setPreferredWidth(400);
 		getColumnModel().getColumn(2).setMaxWidth(400);
 		
-		TableRowSorter trs = new TableRowSorter(getModel());
+		TableRowSorter<DocumentTableModel> trs = new TableRowSorter<DocumentTableModel>(tableModel);
 		setRowSorter(trs);
 	}
-	
+
 	public Document getSelectedDocument() {
 		int[] rows = getSelectedRows();
 		for (int row : rows) {
@@ -74,8 +77,9 @@ public class DocumentTable extends SingleSelectionTableBase {
 			return documents.size();
 		}
 		
-		public Document getSelectedDocument(int rowIndex) {
-			return documents.get(rowIndex);
+		Document getSelectedDocument(int rowIndex) {
+			RowSorter<TableModel> trs = (RowSorter<TableModel>) DocumentTable.this.getRowSorter();
+			return documents.get(trs.convertRowIndexToModel(rowIndex));
 		}
 
 		public Object getValueAt(int rowIndex, int columnIndex) {

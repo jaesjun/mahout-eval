@@ -2,7 +2,9 @@ package org.mahouteval.gui.table;
 
 import java.util.List;
 
+import javax.swing.RowSorter;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import org.mahouteval.model.User;
@@ -11,25 +13,18 @@ public class UserTable extends SingleSelectionTableBase {
 	
 	public void displayUser(List<String> header, List<User> users) {
 		super.setAutoCreateRowSorter(false);
-		setModel(new UserTableModel(users, header));
+		UserTableModel tableModel = new UserTableModel(users, header);
+		setModel(tableModel);
 		getColumnModel().getColumn(0).setMaxWidth(45);
-		//getColumnModel().getColumn(1).setMaxWidth(56);
-		//getColumnModel().getColumn(2).setMaxWidth(56);
 		
-		TableRowSorter trs = new TableRowSorter(getModel());
+		TableRowSorter<UserTableModel> trs = new TableRowSorter<UserTableModel>(tableModel);
 		NumberComparator<Long> numberComparator = new NumberComparator<Long>();
 		trs.setComparator(0, numberComparator);
-		trs.setComparator(1, numberComparator);
 		setRowSorter(trs);
 	}
-	
+
 	public User getSelectedUser() {
-		int[] rows = getSelectedRows();
-		for (int row : rows) {
-			return ((UserTableModel) getModel()).getSelectedUser(row);
-		}
-		
-		return null;
+		return ((UserTableModel) getModel()).getSelectedUser(getSelectedRow());
 	}
 
 	public List<User> getAllUsers() {
@@ -53,8 +48,9 @@ public class UserTable extends SingleSelectionTableBase {
 			return users.size();
 		}
 		
-		public User getSelectedUser(int rowIndex) {
-			return users.get(rowIndex);
+		private User getSelectedUser(int rowIndex) {
+			RowSorter<TableModel> trs = (RowSorter<TableModel>) UserTable.this.getRowSorter();
+			return users.get(trs.convertRowIndexToModel(rowIndex));
 		}
 
 		public Object getValueAt(int rowIndex, int columnIndex) {
@@ -74,7 +70,8 @@ public class UserTable extends SingleSelectionTableBase {
 	    public String getColumnName(int columnIndex) {
 			return header.get(columnIndex);
 	    }
-		
+
 	}
+
 
 }

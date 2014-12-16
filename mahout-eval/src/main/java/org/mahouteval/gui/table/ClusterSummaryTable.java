@@ -3,7 +3,9 @@ package org.mahouteval.gui.table;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.RowSorter;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 public class ClusterSummaryTable extends SingleSelectionTableBase {
@@ -19,8 +21,9 @@ public class ClusterSummaryTable extends SingleSelectionTableBase {
 	
 	public void displayCluster(List<String> header, List<String[]> clusters) {
 		super.setAutoCreateRowSorter(false);
-		setModel(new ClusterSummaryTableModel(clusters, header));
-		TableRowSorter trs = new TableRowSorter(getModel());
+		ClusterSummaryTableModel tableModel = new ClusterSummaryTableModel(clusters, header);
+		setModel(tableModel);
+		TableRowSorter<ClusterSummaryTableModel> trs = new TableRowSorter<ClusterSummaryTableModel>(tableModel);
 		
 		NumberComparator<Long> longComparator = new NumberComparator<Long>();
 		if (clusterSummary == CLUSTER_SUMMAY.CLUSTER_SIZE) {
@@ -33,14 +36,9 @@ public class ClusterSummaryTable extends SingleSelectionTableBase {
 		
 		setRowSorter(trs);
 	}
-	
+
 	public String[] getSelectedCluster() {
-		int[] rows = getSelectedRows();
-		for (int row : rows) {
-			return ((ClusterSummaryTableModel) getModel()).getSelectedCluster(row);
-		}
-		
-		return null;
+		return ((ClusterSummaryTableModel) getModel()).getSelectedCluster(getSelectedRow());
 	}
 
 	public List<String[]> getAllClusters() {
@@ -74,8 +72,9 @@ public class ClusterSummaryTable extends SingleSelectionTableBase {
 			return clusters.size();
 		}
 		
-		public String[] getSelectedCluster(int rowIndex) {
-			return clusters.get(rowIndex);
+		private String[] getSelectedCluster(int rowIndex) {
+			RowSorter<TableModel> trs = (RowSorter<TableModel>) ClusterSummaryTable.this.getRowSorter();
+			return clusters.get(trs.convertRowIndexToModel(rowIndex));
 		}
 
 		public Object getValueAt(int rowIndex, int columnIndex) {

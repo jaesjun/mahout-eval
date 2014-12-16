@@ -5,8 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.RowSorter;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import org.mahouteval.model.Item;
@@ -17,7 +19,7 @@ public class ItemTable extends SingleSelectionTableBase {
 	private PreferenceCellRenderer ubrPreferenceRenderer = new PreferenceCellRenderer();
 	private PreferenceCellRenderer ibrPreferenceRenderer = new PreferenceCellRenderer();
 	
-	private TableRowSorter trs;
+	private TableRowSorter<ItemTableModel> trs;
 	
 	public ItemTable() {
 		orgPreferenceRenderer.setForeground(Color.darkGray);
@@ -27,13 +29,14 @@ public class ItemTable extends SingleSelectionTableBase {
 	
 	public void displayItem(List<String> header, List<Item> items) {
 		super.setAutoCreateRowSorter(true);
-		setModel(new ItemTableModel(header, items));
+		ItemTableModel tableModel = new ItemTableModel(header, items);
+		setModel(tableModel);
 		getColumnModel().getColumn(0).setMaxWidth(45);
 		
 		getColumnModel().getColumn(header.size()).setMaxWidth(55);
 		getColumnModel().getColumn(header.size() + 1).setMaxWidth(55);
 		
-		trs = new TableRowSorter(getModel());
+		trs = new TableRowSorter<ItemTableModel>(tableModel);
 		NumberComparator<Long> numberComparator = new NumberComparator<Long>();
 		trs.setComparator(0, numberComparator);
 		setRowSorter(trs);
@@ -93,6 +96,10 @@ public class ItemTable extends SingleSelectionTableBase {
 		
 		trs.toggleSortOrder(dataModel.header.size() + 2);
 		trs.toggleSortOrder(dataModel.header.size() + 2);
+	}
+
+	public Item getSelectedItem() {
+		return ((ItemTableModel) getModel()).getSelectedItem(getSelectedRow());
 	}
 
 	public Item getItem(Long itemId) {
@@ -158,10 +165,15 @@ public class ItemTable extends SingleSelectionTableBase {
 			return column;
 	    }
 		
-		Item getItem(long itemId) {
+		private Item getItem(long itemId) {
 			return itemMap.get(itemId);
 		}
-		
+
+		private Item getSelectedItem(int rowIndex) {
+			RowSorter<TableModel> trs = (RowSorter<TableModel>) ItemTable.this.getRowSorter();
+			return items.get(trs.convertRowIndexToModel(rowIndex));
+		}
+
 		void clearPreference() {
 			ibrMap.clear();
 			ubrMap.clear();
@@ -171,5 +183,4 @@ public class ItemTable extends SingleSelectionTableBase {
 		}
 	}
 
-	
 }

@@ -253,7 +253,7 @@ public class MahoutDemoUI {
 	
 	public void hideWaitDialog() {
 		if (msgPopupDlg != null) {
-			msgPopupDlg.setVisible(false);
+			msgPopupDlg.dispose();
 			msgPopupDlg = null;
 		}
 	}
