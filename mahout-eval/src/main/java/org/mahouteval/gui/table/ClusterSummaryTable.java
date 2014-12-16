@@ -32,6 +32,7 @@ public class ClusterSummaryTable extends SingleSelectionTableBase {
 			NumberComparator<Double> doubleComparator = new NumberComparator<Double>();
 			trs.setComparator(1, longComparator);
 			trs.setComparator(2, doubleComparator);
+			getColumnModel().getColumn(1).setMaxWidth(65);
 		}
 		
 		setRowSorter(trs);

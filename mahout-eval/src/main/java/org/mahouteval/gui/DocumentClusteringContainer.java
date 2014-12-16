@@ -8,6 +8,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -363,18 +364,19 @@ public class DocumentClusteringContainer extends JPanel implements ActionListene
 			List<TFIDFTermVector> clusterWideVector = new ArrayList<TFIDFTermVector>();
 			Map<String, List<int[]>> termFrequency = NewsKMeansClustering.readTermFrequency(docIds);
 			
-			System.out.println("cluster id [" + clusterId + "] contains [" + docIds.size() + "] documents");
 			for (String docId : docIds) {
 				List<TFIDFTermVector> termVector = docTerms.get(docId);
-				System.out.println("doc id : " + docId + ", term size : " + termVector.size());
 				List<int[]> freqVector = termFrequency.get(docId);
 				
 				mergeTermAndFrequency(clusterWideVector, termVector, freqVector);
 			}
 			
+			NumberFormat nfDouble = NumberFormat.getInstance();
+			nfDouble.setMaximumFractionDigits(3);
+			
 			for (TFIDFTermVector vector : clusterWideVector) {
 				if (vector.getFound() > 0) {
-					termWeight.add(new String[]{vector.getTerm(), String.valueOf(vector.getFound()), String.valueOf(vector.getWeight())});
+					termWeight.add(new String[]{vector.getTerm(), String.valueOf(vector.getFound()), nfDouble.format(vector.getWeight())});
 				}
 			}
 			termTable.displayCluster(termTableHeader, termWeight);
