@@ -3,10 +3,10 @@ Mahout Evaluator
 
 Welcom to mahout evaluator.
 
-![Preview](mahout-eval/doc/mahout-demo-main.tiff)<br>
-![Preview](mahout-eval/doc/mahout-demo-ubr.tiff)<br>
-![Preview](mahout-eval/doc/mahout-demo-clustering.tiff)<br>
-![Preview](mahout-eval/doc/document-clustering.tiff)<br>
+![Preview](mahout-eval/doc/mahout-demo-main.tiff)
+![Preview](mahout-eval/doc/mahout-demo-ubr.tiff)
+![Preview](mahout-eval/doc/mahout-demo-clustering.tiff)
+![Preview](mahout-eval/doc/document-clustering.tiff)
 
 This project is developed to show how mahout works and evaluate mahout algorithm.
 By default, it uses GroupLens user, movie and preference data(http://grouplens.org/datasets/movielens/).
